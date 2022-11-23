@@ -1,11 +1,26 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "includes.h"
+#include "helpers.h"
+#include "tands.h"
+
+
+void server_logger(int trans_status, int trans_val, int trans_id) {
+
+
+}
+
+double epoch_double(struct timespec *tv) {
+	char time_str[32];
+	sprintf(time_str, "%ld.%.9ld", tv->tv_sec, tv->tv_nsec);
+	return atof(time_str);
+}
+
+double print_epoch_double() {
+	struct timespec tv;
+	if(clock_gettime(CLOCK_REALTIME, &tv)) {
+		perror("error clock_gettime\n");
+	}
+	return epoch_double(&tv);
+}
 
 
 int main(int argc, char* argv[]){
@@ -17,8 +32,7 @@ int main(int argc, char* argv[]){
 	struct sockaddr_in newAddr;
 
 	socklen_t addr_size;
-
-	char buffer[1024];
+	int trans_id = 0, trans_value = 0;
 	pid_t childpid;
 
 
@@ -43,6 +57,7 @@ int main(int argc, char* argv[]){
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(SERVER_PORT);
 	serverAddr.sin_addr.s_addr = INADDR_ANY;
+	printf("Using port %d\n", SERVER_PORT);
 
 	ret = bind(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 	if(ret < 0){
@@ -69,14 +84,25 @@ int main(int argc, char* argv[]){
 			close(sockfd);
 
 			while(1){
-				recv(newSocket, buffer, 1024, 0);
-				if(strcmp(buffer, ":exit") == 0){
+				recv(newSocket, &trans_value, sizeof(trans_value), 0);
+				if(trans_value == 101){
 					printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
 					break;
-				}else{
-					printf("Client: %s\n", buffer);
-					send(newSocket, buffer, strlen(buffer), 0);
-					bzero(buffer, sizeof(buffer));
+				}else{ // transaction received
+					//server_logger(0, trans_value, trans_id); // Prints transaction that was received 
+					double current_epoch = print_epoch_double();
+					printf("%.2f: #	%d (T	%d) from UG???.%d\n", current_epoch, trans_id, trans_value, ntohs(newAddr.sin_port));
+
+					//printf("Client: %d\n", trans_value);
+					Trans(trans_value); // do transaction on number
+					// server_logger(1, trans_value, trans_id); // prints transaction done
+
+
+					// Now have to send back: 
+					
+					send(newSocket, &trans_id, sizeof(trans_id), 0);
+					bzero(&trans_value, sizeof(trans_value)); // dunno if it can be done
+					trans_id++; 
 				}
 			}
 		}
