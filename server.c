@@ -51,7 +51,7 @@ int main(int argc, char* argv[]){
 		printf("[-]Error in connection.\n");
 		exit(1);
 	}
-	printf("[+]Server Socket is created.\n");
+	//printf("[+]Server Socket is created.\n");
 
 	memset(&serverAddr, '\0', sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
@@ -64,12 +64,12 @@ int main(int argc, char* argv[]){
 		printf("[-]Error in binding.\n");
 		exit(1);
 	}
-	printf("[+]Bind to port %d\n", SERVER_PORT);
+	//printf("[+]Bind to port %d\n", SERVER_PORT);
 
 	if(listen(sockfd, 10) == 0){
-		printf("[+]Listening....\n");
+		//printf("[+]Listening....\n");
 	}else{
-		printf("[-]Error in binding.\n");
+		//printf("[-]Error in binding.\n");
 	}
 
 
@@ -78,25 +78,42 @@ int main(int argc, char* argv[]){
 		if(newSocket < 0){
 			exit(1);
 		}
-		printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+		//printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
 
 		if((childpid = fork()) == 0){
 			close(sockfd);
+			int client_pid;
+			int hostname_id;
+			int received_hostname_id = 0;
+
 
 			while(1){
 				recv(newSocket, &trans_value, sizeof(trans_value), 0);
-				if(trans_value == 101){
-					printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+				if(trans_value == -1){
+					//printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
 					break;
-				}else{ // transaction received
+				}
+
+				else if (trans_value < -1) {
+					client_pid = trans_value * -1; // back to regular PID
+					// client pid was sent
+				}
+				else if (received_hostname_id == 0) {
+					received_hostname_id += 1;
+					hostname_id = trans_value;
+					continue;
+
+				}
+				
+				else{ // transaction received
 					//server_logger(0, trans_value, trans_id); // Prints transaction that was received 
 					double current_epoch = print_epoch_double();
-					printf("%.2f: #	%d (T	%d) from UG???.%d\n", current_epoch, trans_id, trans_value, ntohs(newAddr.sin_port));
+					printf("%.2f: #%4d (T%3d) from ug%d.%d\n", current_epoch, trans_id, trans_value, hostname_id, client_pid);
 
 					//printf("Client: %d\n", trans_value);
 					Trans(trans_value); // do transaction on number
 					// server_logger(1, trans_value, trans_id); // prints transaction done
-
+					printf("%.2f: #%4d (DONE) from ug%d.%d\n", current_epoch, trans_id, hostname_id, client_pid);
 
 					// Now have to send back: 
 					
