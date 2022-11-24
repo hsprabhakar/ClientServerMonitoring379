@@ -7,11 +7,24 @@ void client_logger(int trans_type, int trans_val) {
 
 
 }
+double epoch_double(struct timespec *tv) {
+	char time_str[32];
+	sprintf(time_str, "%ld.%.9ld", tv->tv_sec, tv->tv_nsec);
+	return atof(time_str);
+}
 
+double print_epoch_double() {
+	struct timespec tv;
+	if(clock_gettime(CLOCK_REALTIME, &tv)) {
+		perror("error clock_gettime\n");
+	}
+	return epoch_double(&tv);
+}
 
 int main(int argc, char* argv[]){
 
 	int clientSocket, ret;
+	int trans_count = 0;
 	struct sockaddr_in serverAddr;
 	//char buffer[1024] = "\0";
 	char hostname[HOST_NAME_MAX + 1];
@@ -40,15 +53,22 @@ int main(int argc, char* argv[]){
 	serverAddr.sin_port = htons(CLIENT_PORT);
 	serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
 	printf("Using server address %s\n", SERVER_IP);
-	printf("Host %s.%d\n", hostname, ntohs(serverAddr.sin_port));
+	printf("Host %s.%d\n", hostname, getpid());
 	ret = connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 	if(ret < 0){
 		printf("[-]Error in connection.\n");
 		exit(1);
 	}
-	
+	// get PID and get ug machine #. Limited to ugxx hostnames only
+	int client_pid = getpid();
+	client_pid *= -1;
+	send(clientSocket, &client_pid, sizeof(client_pid), 0);
+	int hostname_id;
+	char _ug_str;
+	sscanf(hostname, "%c%c%d", &_ug_str, &_ug_str, &hostname_id);
+	// printf("[+]Connected to Server.\n");
+	send(clientSocket, &hostname_id, sizeof(hostname_id), 0);
 
-	//printf("[+]Connected to Server.\n");
 
 	while(1){
 		//printf("Client: \t");
@@ -63,19 +83,25 @@ int main(int argc, char* argv[]){
 			if (action_char == 'S') {
 				//client_logger(0, trans_value);
 				Sleep(trans_value);
+				printf("Sleep %d units\n", trans_value);
 				continue;
 			}
 			else if (action_char == 'T') {
-				printf("Sending transaction with value: %d\n", trans_value);
+				//printf("Sending transaction with value: %d\n", trans_value);
 				//client_logger(1, trans_value); Sent T of value x
+				double current_epoch = print_epoch_double();
+				printf("%.2f: Send (T%3d)\n", current_epoch, trans_value);
 				send(clientSocket, &trans_value, sizeof(trans_value), 0);
+				trans_count++;
+
 			}
 
 			if (recv(clientSocket, &trans_id, sizeof(trans_id), 0) < 0) { // received transaction number from server into trans_value
 				fprintf(stderr, "error in receiving data. \n");
 				exit(1);
 			}
-			printf("Server gave T%d this transaction ID: %d\n", trans_value, trans_id);
+			double current_epoch = print_epoch_double();
+			printf("%.2f: Recv (D%3d)\n", current_epoch, trans_id);
 
 		}
 		// exit 
@@ -83,20 +109,14 @@ int main(int argc, char* argv[]){
         // client now receives stuff from server
         // client now closes itself
 
-		trans_value = 101; // send exiting command to server after file is done
+		trans_value = -1; // send exiting command to server after file is done
 		send(clientSocket, &trans_value, sizeof(trans_value), 0);
 
-		if(trans_value == 101){
+		if(trans_value == -1){
 			close(clientSocket);
-			printf("[-]Disconnected from server.\n");
+			printf("Sent %d transactions\n", trans_count);
 			exit(1);
 		}
-
-		// if(recv(clientSocket, trans_id, sizeof(trans_id), 0) < 0){
-		// 	printf("[-]Error in receiving data.\n");
-		// }else{
-		// 	printf("Server: \t%d\n", trans_id);
-		// }
 	}
 
 	return 0;
