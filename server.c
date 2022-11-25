@@ -68,6 +68,12 @@ int main(int argc, char* argv[]){
 
 	if(listen(sockfd, 10) == 0){
 		//printf("[+]Listening....\n");
+
+		// TIMEOUT
+		struct timeval tmv;
+		tmv.tv_sec = 15;
+		tmv.tv_usec = 0;
+		setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tmv, sizeof tmv);
 	}else{
 		//printf("[-]Error in binding.\n");
 	}
@@ -85,12 +91,19 @@ int main(int argc, char* argv[]){
 			int client_pid;
 			int hostname_id;
 			int received_hostname_id = 0;
+			int trans_count = 0;
 
 
 			while(1){
+				///printf("before recv\n");
 				recv(newSocket, &trans_value, sizeof(trans_value), 0);
+				///printf("past here?\n");
 				if(trans_value == -1){
-					//printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+					FILE *fp;
+					fp = freopen("logger", "a", stdout);
+					printf("%4d transactions from ug%d.%d\n", trans_count, hostname_id, client_pid);
+					fclose(fp);
+					///fprintf(stdout,"breaking\n");
 					break;
 				}
 
@@ -114,6 +127,7 @@ int main(int argc, char* argv[]){
 					Trans(trans_value); // do transaction on number
 					// server_logger(1, trans_value, trans_id); // prints transaction done
 					printf("%.2f: #%4d (DONE) from ug%d.%d\n", current_epoch, trans_id, hostname_id, client_pid);
+					trans_count++;
 
 					// Now have to send back: 
 					
@@ -122,11 +136,30 @@ int main(int argc, char* argv[]){
 					trans_id++; 
 				}
 			}
+			///printf("-1 RECEIVED\n");
+			//break;
+
 		}
+		printf("outside fork range\n");
 
 	}
 
 	close(newSocket);
+	// final summary
+	// this shit dont work cuz it never gets reached :(
+	FILE *in_file = fopen("logger", "r");
+	char ch;
+	if (in_file == NULL) {
+		fprintf(stderr, "Error: Can't display Summary\n");
+	}
+	else {
+		printf("SUMMARY\n");
+		do {
+			ch =fgetc(in_file);
+			printf("%c", ch);
+		} while (ch != EOF);
+		fclose(in_file);
+	}
 
 
 	return 0;
