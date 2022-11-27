@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
 	struct sockaddr_in newAddr;
 
 	socklen_t addr_size;
-	int trans_id = 0, trans_value = 0;
+	int trans_id = 1, trans_value = 0;
 	pid_t childpid;
 
 

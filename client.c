@@ -40,18 +40,29 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "Invalid port. Must be between 5000 and 64000\n");
         return -1; 
     }
-	printf("Using port %d\n", CLIENT_PORT);
 	clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if(clientSocket < 0){
 		printf("[-]Error in connection.\n");
 		exit(1);
 	}
 	//printf("[+]Client Socket is created.\n");
+	char line[1024];
+	char action_char = 0;
+	int trans_value = 0, trans_id = 0, mylen;
+	FILE *fp;
+	char client_log_file_name[1024];
+	// char machine_no_string[20];
+	// char machine_process_string[20];
+	char numer_pid[20];
+	sprintf(numer_pid, "%d", getpid());
+	snprintf(client_log_file_name, sizeof(client_log_file_name), "%s.%s", hostname, numer_pid);
+	fp = freopen(client_log_file_name, "w", stdout);
 
 	memset(&serverAddr, '\0', sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(CLIENT_PORT);
 	serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
+	printf("Using port %d\n", CLIENT_PORT);
 	printf("Using server address %s\n", SERVER_IP);
 	printf("Host %s.%d\n", hostname, getpid());
 	ret = connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
@@ -74,10 +85,7 @@ int main(int argc, char* argv[]){
 		//printf("Client: \t");
 
         //char *line = NULL;
-		char line[1024];
-		char action_char = 0;
-		int trans_value = 0, trans_id = 0, mylen;
-
+		
 		while (fgets(line, sizeof(line), stdin)) { // https://stackoverflow.com/a/74541088/12229659 thank you David :)
 			sscanf(line, "%c%d%n", &action_char, &trans_value, &mylen);
 			if (action_char == 'S') {
@@ -118,6 +126,6 @@ int main(int argc, char* argv[]){
 			exit(1);
 		}
 	}
-
+	fclose(fp);
 	return 0;
 }
