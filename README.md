@@ -10,7 +10,8 @@ is used here on the server side.
 ## Instructions
 To compile the project, run ```make``` to compile *server.c*, *client.c*, and the man pages in PDF form.
 **Everything is located at the base directory of the project**
-for further instructions on usage. Run ```make clean``` to purge the executables, PDF files, and the logger file.
+for further instructions on usage. Run ```make clean``` to purge the executables, PDF files, and the logger file. The source for the man files
+comes from *client.1* and *server.1*
 
 ## Important!
 Due to the multiprocessing nature of the server, post-server transaction summary details are printed out in logger instead. 
