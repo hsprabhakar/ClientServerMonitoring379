@@ -1,0 +1,18 @@
+.TH CLIENT 1 "Nov 25, 2022" "CLIENT Version 1.0"
+.SH NAME
+client \- Client in C that can connect to a server via TCP.
+.SH SYNOPSIS
+\fBclient\fP
+\fIport\fP
+\fIserver_ip\fP
+.SH DESCRIPTION
+\fBclient\fP starts a TCP client that can take in a file as a \< input or through stdin and send integer values to a specified \fIport\fP to a specific \fIserver_ip\fP.
+.SS Options
+.TP
+\fIport\fR
+Any port between 5,000 and 64,000.
+.TP
+\fIserver_ip\fR
+The ip address of the server. If localhost then use \fR127.0.0.1\fP.
+.SH SEE ALSO
+server(1)

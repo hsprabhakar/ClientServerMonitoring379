@@ -71,7 +71,7 @@ int main(int argc, char* argv[]){
 
 		// TIMEOUT
 		struct timeval tmv;
-		tmv.tv_sec = 15;
+		tmv.tv_sec = 30;
 		tmv.tv_usec = 0;
 		setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tmv, sizeof tmv);
 	}else{
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]){
 			//break;
 
 		}
-		printf("outside fork range\n");
+		//printf("outside fork range\n");
 
 	}
 
