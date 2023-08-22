@@ -1,5 +1,5 @@
 
-# Multi-client Server in C - CMPUT379
+# Multi-client Server in C 
 
 ## About
 This project provides the user a client and server that can communicate using TCP over local ip addresses.
